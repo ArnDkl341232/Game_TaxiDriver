@@ -19,7 +19,7 @@ images_dict = {
     'hole' : pg.image.load('img/hole.png'),
     'hotel' : pg.transform.scale(pg.image.load('img/hotel.png'),(80,80)),
     'ps': pg.image.load('img/passenger.png'),
-    'taxi_bg': pg.transform.scale(pg.image.load('img/taxi_background.png'),(80,45)),
+    'parking': pg.transform.scale(pg.image.load('img/parking.png'),(80,45)),
 }
 
 #taxi
@@ -29,8 +29,8 @@ player_rect.y = 300
 player_rect.x = 300
 
 #hotel
-hotel_img = 'hotel'
-hotel_rect = images_dict[player_view].get_rect()
+hotel_img = images_dict['hotel']
+hotel_rect = hotel_img.get_rect()
 hotel_positions = [
     (60,30),
     (555,30),
@@ -40,12 +40,16 @@ hotel_positions = [
 hotel_rect.x, hotel_rect.y = random.choice(hotel_positions)
 
 #parking
-parking_img = images_dict['taxi_bg']
+parking_img = images_dict['parking']
 parking_rect = parking_img.get_rect()
 (parking_rect.x,
  parking_rect.y) = (hotel_rect.x, hotel_rect.y + hotel_rect.height)
 
-#pasagir
+#passenger
+passenger_img = images_dict['ps']
+passenger_rect = passenger_img.get_rect()
+(passenger_rect.x,
+ passenger_rect.y) = (hotel_rect.x, hotel_rect.y + hotel_rect.height)
 
 
 pg.init()
@@ -79,6 +83,16 @@ while run:
         y_direction = 1
         player_view = 'front'
 
+    if player_rect.x >= width - player_rect.width:
+        player_rect.x = width - player_rect.height
+    if player_rect.y >= height - player_rect.height:
+        player_rect.y = height - player_rect.width
+    if player_rect.x <= 0:
+        player_rect.x = 0
+    if player_rect.y <= 0:
+        player_rect.y = 0
+
+
 
 
     #Obnovlayem
@@ -95,9 +109,10 @@ while run:
     screen.blit(images_dict['bg'], (0,0))
 
     #prorisovka
+    screen.blit(hotel_img, hotel_rect)
+    screen.blit(parking_img, parking_rect)
+    screen.blit(passenger_img, passenger_rect)
     screen.blit(images_dict[player_view], player_rect)
-    screen.blit(images_dict['hotel'], hotel_rect)
-    screen.blit(images_dict['taxi_bg'], parking_rect)
 
     pg.display.flip()
 
