@@ -1,6 +1,8 @@
+from ast import Index
+
 import pygame as pg
-from matplotlib.pyplot import xlabel
 import random
+
 
 FPS = 60
 width, height = 700,400
@@ -49,21 +51,30 @@ parking_rect = parking_img.get_rect()
 passenger_img = images_dict['ps']
 passenger_rect = passenger_img.get_rect()
 (passenger_rect.x,
- passenger_rect.y) = (hotel_rect.x, hotel_rect.y + hotel_rect.height)
+ passenger_rect.y) = random.choice(hotel_positions)
+passenger_rect.y += hotel_rect.height
 
 
 def is_crash():
     for x in range(player_rect.x, player_rect.topright[0], 1):
         for y in range(player_rect.y, player_rect.bottomleft[1], 1):
-            if screen.get_at((x,y)) == (209,204,173):
-                return True
+            try:
+                if screen.get_at((x,y)) == (220,215,177):
+                    return True
+            except IndexError:
+                pass
 
     if hotel_rect.colliderect(player_rect):
         return True
     return False
 
 
-
+def draw_message(text,color):
+    font = pg.font.SysFont(None,40)
+    message = font.render(text,True, color)
+    screen.blit(message,(320,150))
+    pg.display.flip()
+    pg.time.delay(1000)
 
 
 pg.init()
@@ -116,10 +127,26 @@ while run:
     y_direction = 0
 
     if is_crash():
-        print("Is Crash")
-        #run = False
+        print("IS CRASH")
+        player_view = 'rear'
+        player_rect.x = 300
+        player_rect.y = 300
+        continue
 
+    if parking_rect.contains(player_rect):
+        draw_message("Win!", pg.Color('green'))
+        player_view = 'rear'
+        player_rect.x = 300
+        player_rect.y = 300
 
+        hotel_rect.x, hotel_rect.y = random.choice(hotel_positions)
+        parking_rect.x, parking_rect.y = hotel_rect.x, hotel_rect.y + hotel_rect.height
+        (passenger_rect.x, passenger_rect.y) = random.choice(hotel_positions)
+        passenger_rect.y += hotel_rect.height
+        continue
+
+    if player_rect.colliderect(passenger_rect):
+        passenger_rect.x, passenger_rect.y = player_rect.x, player_rect.y
 
     #Visual
     # screen.blit()
