@@ -52,6 +52,20 @@ passenger_rect = passenger_img.get_rect()
  passenger_rect.y) = (hotel_rect.x, hotel_rect.y + hotel_rect.height)
 
 
+def is_crash():
+    for x in range(player_rect.x, player_rect.topright[0], 1):
+        for y in range(player_rect.y, player_rect.bottomleft[1], 1):
+            if screen.get_at((x,y)) == (209,204,173):
+                return True
+
+    if hotel_rect.colliderect(player_rect):
+        return True
+    return False
+
+
+
+
+
 pg.init()
 
 screen = pg.display.set_mode([width, height])
@@ -100,6 +114,10 @@ while run:
     player_rect.x += pl_speed * x_direction
     x_direction = 0
     y_direction = 0
+
+    if is_crash():
+        print("Is Crash")
+        #run = False
 
 
 
