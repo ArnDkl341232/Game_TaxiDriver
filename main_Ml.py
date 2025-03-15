@@ -1,8 +1,11 @@
 from ast import Index
-
+from collections import defaultdict
+from email.policy import default
+import numpy as np
 import pygame as pg
 import random
 
+from main import is_crash
 
 FPS = 60
 width, height = 700,450
@@ -24,11 +27,12 @@ images_dict = {
     'parking': pg.transform.scale(pg.image.load('img/parking.png'),(80,45)),
 }
 
-#taxi
+#taxi - player
 player_view = 'rear'
 player_rect = images_dict[player_view].get_rect()
 player_rect.y = 300
 player_rect.x = 300
+size_player = player_rect.x, player_rect.y
 
 #hotel
 hotel_img = images_dict['hotel']
@@ -41,11 +45,15 @@ hotel_positions = [
 ]
 hotel_rect.x, hotel_rect.y = random.choice(hotel_positions)
 
+razmer_hotel = hotel_rect.x, hotel_rect.y + hotel_rect.height
+
+
 #parking
 parking_img = images_dict['parking']
 parking_rect = parking_img.get_rect()
 (parking_rect.x,
  parking_rect.y) = (hotel_rect.x, hotel_rect.y + hotel_rect.height)
+
 
 #passenger
 passenger_img = images_dict['ps']
@@ -53,6 +61,80 @@ passenger_rect = passenger_img.get_rect()
 (passenger_rect.x,
  passenger_rect.y) = random.choice(hotel_positions)
 passenger_rect.y += hotel_rect.height
+
+
+#reduction of the formula
+size_pg = (passenger_rect.x, passenger_rect.y)
+
+
+
+#objects for prorisovka
+objects = [
+        (hotel_img, hotel_rect),
+        (parking_img, parking_rect),
+        (passenger_img, passenger_rect),
+        (images_dict[player_view], player_rect)
+    ]
+
+###########################################################################################################################
+#Q-learn
+actions = [0, 1, 2, 3] #0- right ,1- left, 2- up, 3- down
+
+Q_tab = defaultdict(lambda:[0, 0, 0, 0])
+
+learning_rate = 0.9
+discount_factor = 0.9
+epsilon = 0.1
+
+def choose_action(state):
+    if random.random() < epsilon:
+        return random.choice(actions)
+    else:
+        return np.argmax(Q_tab(state))
+
+def update_q(state, action, reward, next_state):
+    best_n = max(Q_tab(next_state))
+    Q_tab[state][action] += learning_rate * (reward + discount_factor * best_n - Q_tab[state][action])
+
+def make_step():
+    current_state = (player_rect.x , player_rect.y)
+    action = choose_action(current_state)
+    apply_action(action)
+    reward = -1
+    episode_end = False
+    success = False
+
+    if is_crash():
+        reward = -100
+        episode_end = False
+
+    if parking_rect.contains(player_rect):
+        reward = 100
+        episode_end = True
+        success = True
+
+    next_state = (player_rect.x, player_rect.y)
+    update_q(current_state, action, reward, next_state)
+
+    return (episode_end, success)
+###########################################################################################################################
+def apply_action(action):
+    global player_view, x_direction, y_direction
+    x_direction = 0
+    y_direction = 0
+    if action == 0:
+        x_direction = 1
+        player_view = 'right'
+    elif action == 1:
+        x_direction = -1
+        player_view = 'left'
+    elif action == 2:
+        y_direction = -1
+        player_view = 'rear'
+    elif action == 3:
+        y_direction = 1
+        player_view = 'front'
+
 
 
 def is_crash():
@@ -78,11 +160,8 @@ def draw_message(text,color):
 
 
 pg.init()
-
 screen = pg.display.set_mode([width, height])
-
 timer = pg.time.Clock()
-
 run = True
 
 while run:
@@ -95,18 +174,18 @@ while run:
         if event.type  == pg.QUIT or keys_kl[pg.K_ESCAPE]:
             run = False
 
-    if keys_kl[pg.K_RIGHT]:
-        x_direction = 1
-        player_view = 'right'
-    elif keys_kl[pg.K_LEFT]:
-        x_direction = -1
-        player_view = 'left'
-    elif keys_kl[pg.K_UP]:
-        y_direction = -1
-        player_view = 'rear'
-    elif keys_kl[pg.K_DOWN]:
-        y_direction = 1
-        player_view = 'front'
+    # if keys_kl[pg.K_RIGHT]:
+    #     x_direction = 1
+    #     player_view = 'right'
+    # elif keys_kl[pg.K_LEFT]:
+    #     x_direction = -1
+    #     player_view = 'left'
+    # elif keys_kl[pg.K_UP]:
+    #     y_direction = -1
+    #     player_view = 'rear'
+    # elif keys_kl[pg.K_DOWN]:
+    #     y_direction = 1
+    #     player_view = 'front'
 
     if player_rect.x >= width - player_rect.width:
         player_rect.x = width - player_rect.height
@@ -116,7 +195,6 @@ while run:
         player_rect.x = 0
     if player_rect.y <= 0:
         player_rect.y = 0
-
 
 
 
@@ -131,7 +209,7 @@ while run:
         player_view = 'rear'
         player_rect.x = 300
         player_rect.y = 300
-        (passenger_rect.x, passenger_rect.y) = random.choice(hotel_positions)
+        size_pg = random.choice(hotel_positions)
         passenger_rect.y += hotel_rect.height
         continue
 
@@ -142,13 +220,16 @@ while run:
         player_rect.y = 300
 
         hotel_rect.x, hotel_rect.y = random.choice(hotel_positions)
-        parking_rect.x, parking_rect.y = hotel_rect.x, hotel_rect.y + hotel_rect.height
-        (passenger_rect.x, passenger_rect.y) = random.choice(hotel_positions)
+        parking_rect.x, parking_rect.y = razmer_hotel
+        size_pg = random.choice(hotel_positions)
         passenger_rect.y += hotel_rect.height
+        reward = 100
+        episode_end = True
+        success = True
         continue
 
     if player_rect.colliderect(passenger_rect):
-        passenger_rect.x, passenger_rect.y = player_rect.x, player_rect.y
+        size_pg = size_player
 
     #Visual
     # screen.blit()
@@ -156,11 +237,8 @@ while run:
     screen.blit(images_dict['bg'], (0,0))
 
     #prorisovka
-    screen.blit(hotel_img, hotel_rect)
-    screen.blit(parking_img, parking_rect)
-    screen.blit(passenger_img, passenger_rect)
-    screen.blit(images_dict[player_view], player_rect)
-
+    for img, rect in objects:
+        screen.blit(img, rect)
     pg.display.flip()
 
 
