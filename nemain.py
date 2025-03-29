@@ -13,13 +13,13 @@ player_view = 'front'
 BLACK = (0,0,0)
 
 images_dict = {
-    'bg' : pg.image.load('img/Background.png'),
-    'rear' : pg.image.load('img/cab_rear.png'),
-    'left' : pg.image.load('img/cab_left.png'),
-    'right' : pg.image.load('img/cab_right.png'),
-    'front' : pg.image.load('img/cab_front.png'),
+    'bg' : pg.image.load('img/Background1.png'),
+    'rear' : pg.image.load('img/cab_rear_old.png'),
+    'left' : pg.image.load('img/cab_left_old.png'),
+    'right' : pg.image.load('img/cab_right_old.png'),
+    'front' : pg.image.load('img/cab_front_old.png'),
     'hole' : pg.image.load('img/hole.png'),
-    'hotel' : pg.transform.scale(pg.image.load('img/hotel.png'),(80,80)),
+    'hotel' : pg.transform.scale(pg.image.load('img/hotel_old.png'), (80, 80)),
     'ps': pg.image.load('img/passenger.png'),
     'parking': pg.transform.scale(pg.image.load('img/parking.png'),(80,45)),
 }
